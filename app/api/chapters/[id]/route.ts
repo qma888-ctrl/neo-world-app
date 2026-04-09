@@ -1,9 +1,26 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getChapterById } from '@/lib/notion';
-import { Chapter } from '@/lib/types';
+import { NextRequest, NextResponse } from 'next/server'
+import { fetchChapterById } from '@/lib/notion'
 
 export async function GET(
-  req: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
-) {Try {\n      const chapter = await getChapterById(params.id);
-\n      if (!chapter) {\n        return NextResponse.json({ error: 'Not found' }, { status: 404 });\n      }\n      return NextResponse.json(chapter);\n    } catch (error) {\n      return NextResponse.json(\n        { error: 'Internal server error' },\n        { status: 500 }\n      );\n    }\n  }
+) {
+  try {
+    const chapter = await fetchChapterById(params.id)
+
+    if (!chapter) {
+      return NextResponse.json(
+        { error: 'Chapter not found' },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json(chapter)
+  } catch (error) {
+    console.error('API error:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch chapter' },
+      { status: 500 }
+    )
+  }
+}
