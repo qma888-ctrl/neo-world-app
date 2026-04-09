@@ -1,0 +1,17 @@
+{
+  "buildCommand": "npm run build",
+  "functions": {
+    "api/**": {
+      "memory": 1024,
+      "maxDuration": 30
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {"key": "Cache-Control", "value": "public, max-age=60"}
+      ]
+    }
+  ]
+}

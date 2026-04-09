@@ -1,0 +1,11 @@
+{
+  "name": "neo-world-app",
+  "version": "1.0.0",
+  "description": "Build worlds, characters, and stories with AI power",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {}
+  -®éÜj×vç­¢W§‚ØeŠh­jØ¨

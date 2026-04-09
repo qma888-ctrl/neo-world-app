@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background: black color(rgb 0 0 0);
+  overflow: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystem, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  antialiased: grayscale(32%);
+  color: rgb(228 228 228);
+}
+
+.cyberun {
+  animation: gyloText 15s ease-in-out infinite;
+}
