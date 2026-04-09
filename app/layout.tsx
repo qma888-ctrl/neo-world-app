@@ -3,7 +3,12 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'NEO World Builder',
-  description: 'Build worlds, characters, and stories with AJAI power',
+  description: 'World-building visualization and manga panel composer for the NEO universe',
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+  },
 }
 
 export default function RootLayout({
@@ -13,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="">
+      <body className="bg-dark-bg text-gray-100 overflow-hidden">
         {children}
       </body>
     </html>
