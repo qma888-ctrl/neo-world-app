@@ -78,6 +78,14 @@ export interface GraphNode {
   color?: string
   size?: number
   data: any
+  // d3 SimulationNodeDatum optional fields
+  index?: number
+  x?: number
+  y?: number
+  vx?: number
+  vy?: number
+  fx?: number | null
+  fy?: number | null
 }
 
 export interface GraphLink {
