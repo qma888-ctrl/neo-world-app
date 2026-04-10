@@ -173,7 +173,7 @@ export function NodeGraph() {
         d3.select(this)
           .transition()
           .duration(200)
-          .attr('r', (d as GraphNode) => (d.size || 8) * 2)
+          .attr('r', (d: any) => ((d as GraphNode).size || 8) * 2)
           .attr('opacity', 1)
           .attr('filter', `drop-shadow(0 0 10px ${d.color})`)
       })
