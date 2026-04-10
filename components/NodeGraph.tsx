@@ -126,11 +126,11 @@ export function NodeGraph() {
 
     // Create simulation
     const simulation = d3
-      .forceSimulation<GraphNode>(nodes)
+      .forceSimulation(nodes as any)
       .force(
         'link',
-        d3.forceLink<GraphNode, GraphLink>(links)
-          .id((d) => d.id)
+        d3.forceLink(links as any)
+          .id((d: any) => d.id)
           .distance(100)
       )
       .force('charge', d3.forceManyBody().strength(-300))
