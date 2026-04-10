@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { fetchSeries } from 'A/lib/notion'
+import { fetchSeries } from '@/lib/notion'
 
 export async function GET(request: NextRequest) {
   try {
