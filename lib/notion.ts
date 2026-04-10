@@ -11,14 +11,20 @@ const notion = new Client({
   auth: process.env.NOTION_API_KEY,
 })
 
+// Database IDs from env
 const CHARS_DB = process.env.NOTION_CHARACTERS_DB_ID!
 const WORLD_DB = process.env.NOTION_WORLD_BUILDING_DB_ID!
 const CHAPTERS_DB = process.env.NOTION_CHAPTERS_DB_ID!
 const SERIES_DB = process.env.NOTION_SERIES_DB_ID!
 
+// ============ CHARACTER FUNCTIONS ============
+
 export async function fetchCharacters(): Promise<CharacterNode[]> {
   try {
-    const response = await notion.databases.query({ database_id: CHARS_DB })
+    const response = await notion.databases.query({
+      database_id: CHARS_DB,
+    })
+
     return response.results
       .map((page: any) => ({
         id: page.id,
@@ -34,6 +40,7 @@ export async function fetchCharacters(): Promise<CharacterNode[]> {
         imageUrl: getFileProperty(page.properties['Character Full Name']),
         pageUrl: page.url,
       }))
+      // Filter out archived characters
       .filter((char: CharacterNode) => !char.name.startsWith('[ARCHIVED]'))
   } catch (error) {
     console.error('Error fetching characters:', error)
@@ -43,9 +50,19 @@ export async function fetchCharacters(): Promise<CharacterNode[]> {
 
 export async function fetchCharacterById(id: string): Promise<Character | null> {
   try {
-    const page = await notion.pages.retrieve({ page_id: id })
-    const blockMap = await notion.blocks.children.list({ block_id: id })
-    const content = blockMap.results.map((block: any) => extractBlockText(block)).filter(Boolean).join('\n')
+    const page = await notion.pages.retrieve({
+      page_id: id,
+    })
+
+    const blockMap = await notion.blocks.children.list({
+      block_id: id,
+    })
+
+    const content = blockMap.results
+      .map((block: any) => extractBlockText(block))
+      .filter(Boolean)
+      .join('\n')
+
     return {
       id: page.id,
       name: getTitleProperty(page.properties['Character Full Name']),
@@ -60,10 +77,14 @@ export async function fetchCharacterById(id: string): Promise<Character | null> 
       genre: getTextProperty(page.properties['Genre']),
       origin: getTextProperty(page.properties['Origine']),
       sexuality: getTextProperty(page.properties['Sexuallity']),
-      romanticInterests: getTextProperty(page.properties['Romantic Interests']),
+      romanticInterests: getTextProperty(
+        page.properties['Romantic Interests']
+      ),
       family: getTextProperty(page.properties['Family']),
       fightingStyle: getTextProperty(page.properties['Fighting Style']),
-      specialAbilities: getMultiSelectProperty(page.properties['Special Ability']),
+      specialAbilities: getMultiSelectProperty(
+        page.properties['Special Ability']
+      ),
       backstory: extractSectionFromContent(content, 'backstory'),
       personality: extractSectionFromContent(content, 'personality'),
       motivations: extractSectionFromContent(content, 'motivations'),
@@ -77,14 +98,23 @@ export async function fetchCharacterById(id: string): Promise<Character | null> 
   }
 }
 
-export async function updateCharacter(id: string, updates: Partial<Character>): Promise<boolean> {
+export async function updateCharacter(
+  id: string,
+  updates: Partial<Character>
+): Promise<boolean> {
   try {
     await notion.pages.update({
       page_id: id,
       properties: {
         ...(updates.age && { Age: { rich_text: [{ text: { content: updates.age } }] } }),
-        ...(updates.height && { Height: { rich_text: [{ text: { content: updates.height } }] } }),
-        ...(updates.fightingStyle && { 'Fighting Style': { rich_text: [{ text: { content: updates.fightingStyle } }] } }),
+        ...(updates.height && {
+          Height: { rich_text: [{ text: { content: updates.height } }] },
+        }),
+        ...(updates.fightingStyle && {
+          'Fighting Style': {
+            rich_text: [{ text: { content: updates.fightingStyle } }],
+          },
+        }),
       },
     })
     return true
@@ -94,9 +124,14 @@ export async function updateCharacter(id: string, updates: Partial<Character>): 
   }
 }
 
+// ============ WORLD BUILDING FUNCTIONS ============
+
 export async function fetchWorldRules(): Promise<WorldRule[]> {
   try {
-    const response = await notion.databases.query({ database_id: WORLD_DB })
+    const response = await notion.databases.query({
+      database_id: WORLD_DB,
+    })
+
     return response.results.map((page: any) => ({
       id: page.id,
       name: getTextProperty(page.properties['Name']),
@@ -113,9 +148,19 @@ export async function fetchWorldRules(): Promise<WorldRule[]> {
 
 export async function fetchWorldRuleById(id: string): Promise<WorldRule | null> {
   try {
-    const page = await notion.pages.retrieve({ page_id: id })
-    const blockMap = await notion.blocks.children.list({ block_id: id })
-    const content = blockMap.results.map((block: any) => extractBlockText(block)).filter(Boolean).join('\n')
+    const page = await notion.pages.retrieve({
+      page_id: id,
+    })
+
+    const blockMap = await notion.blocks.children.list({
+      block_id: id,
+    })
+
+    const content = blockMap.results
+      .map((block: any) => extractBlockText(block))
+      .filter(Boolean)
+      .join('\n')
+
     return {
       id: page.id,
       name: getTextProperty(page.properties['Name']),
@@ -130,12 +175,17 @@ export async function fetchWorldRuleById(id: string): Promise<WorldRule | null> 
   }
 }
 
-export async function updateWorldRule(id: string, updates: Partial<WorldRule>): Promise<boolean> {
+export async function updateWorldRule(
+  id: string,
+  updates: Partial<WorldRule>
+): Promise<boolean> {
   try {
     await notion.pages.update({
       page_id: id,
       properties: {
-        ...(updates.name && { Name: { title: [{ text: { content: updates.name } }] } }),
+        ...(updates.name && {
+          Name: { title: [{ text: { content: updates.name } }] },
+        }),
       },
     })
     return true
@@ -145,13 +195,26 @@ export async function updateWorldRule(id: string, updates: Partial<WorldRule>): 
   }
 }
 
+// ============ CHAPTER FUNCTIONS ============
+
 export async function fetchChapters(): Promise<Chapter[]> {
   try {
     const response = await notion.databases.query({
       database_id: CHAPTERS_DB,
-      filter: { property: 'Book', select: { does_not_equal: 'Archive' } },
-      sorts: [{ property: 'Release Order', direction: 'ascending' }],
+      filter: {
+        property: 'Book',
+        select: {
+          does_not_equal: 'Archive',
+        },
+      },
+      sorts: [
+        {
+          property: 'Release Order',
+          direction: 'ascending',
+        },
+      ],
     })
+
     return response.results.map((page: any) => ({
       id: page.id,
       title: getTitleProperty(page.properties['Episode']),
@@ -172,9 +235,19 @@ export async function fetchChapters(): Promise<Chapter[]> {
 
 export async function fetchChapterById(id: string): Promise<Chapter | null> {
   try {
-    const page = await notion.pages.retrieve({ page_id: id })
-    const blockMap = await notion.blocks.children.list({ block_id: id })
-    const content = blockMap.results.map((block: any) => extractBlockText(block)).filter(Boolean).join('\n')
+    const page = await notion.pages.retrieve({
+      page_id: id,
+    })
+
+    const blockMap = await notion.blocks.children.list({
+      block_id: id,
+    })
+
+    const content = blockMap.results
+      .map((block: any) => extractBlockText(block))
+      .filter(Boolean)
+      .join('\n')
+
     return {
       id: page.id,
       title: getTitleProperty(page.properties['Episode']),
@@ -194,9 +267,14 @@ export async function fetchChapterById(id: string): Promise<Chapter | null> {
   }
 }
 
+// ============ SERIES FUNCTIONS ============
+
 export async function fetchSeries(): Promise<Series[]> {
   try {
-    const response = await notion.databases.query({ database_id: SERIES_DB })
+    const response = await notion.databases.query({
+      database_id: SERIES_DB,
+    })
+
     return response.results.map((page: any) => ({
       id: page.id,
       name: getTextProperty(page.properties['Name']),
@@ -212,6 +290,8 @@ export async function fetchSeries(): Promise<Series[]> {
     return []
   }
 }
+
+// ============ PROPERTY EXTRACTION HELPERS ============
 
 function getTextProperty(prop: any): string {
   if (!prop || prop.type !== 'rich_text') return ''
@@ -250,28 +330,59 @@ function getNumberProperty(prop: any): number | undefined {
 
 function getFileProperty(prop: any): string | undefined {
   if (!prop) return undefined
+  // Check for files in relation or as attachments
   if (prop.type === 'files' && prop.files.length > 0) {
     return prop.files[0].file?.url || prop.files[0].external?.url
   }
   return undefined
 }
 
+// ============ CONTENT EXTRACTION HELPERS ============
+
 function extractBlockText(block: any): string {
   let text = ''
+
   switch (block.type) {
-    case 'paragraph': text = block.paragraph.rich_text.map((t: any) => t.plain_text).join(''); break
-    case 'heading_1': text = block.heading_1.rich_text.map((t: any) => t.plain_text).join(''); break
-    case 'heading_2': text = block.heading_2.rich_text.map((t: any) => t.plain_text).join(''); break
-    case 'heading_3': text = block.heading_3.rich_text.map((t: any) => t.plain_text).join(''); break
-    case 'bulleted_list_item': text = block.bulleted_list_item.rich_text.map((t: any) => t.plain_text).join(''); break
-    case 'numbered_list_item': text = block.numbered_list_item.rich_text.map((t: any) => t.plain_text).join(''); break
-    case 'image': text = block.image.caption ? block.image.caption.map((t: any) => t.plain_text).join('') : ''; break
+    case 'paragraph':
+      text = block.paragraph.rich_text.map((t: any) => t.plain_text).join('')
+      break
+    case 'heading_1':
+      text = block.heading_1.rich_text.map((t: any) => t.plain_text).join('')
+      break
+    case 'heading_2':
+      text = block.heading_2.rich_text.map((t: any) => t.plain_text).join('')
+      break
+    case 'heading_3':
+      text = block.heading_3.rich_text.map((t: any) => t.plain_text).join('')
+      break
+    case 'bulleted_list_item':
+      text = block.bulleted_list_item.rich_text
+        .map((t: any) => t.plain_text)
+        .join('')
+      break
+    case 'numbered_list_item':
+      text = block.numbered_list_item.rich_text
+        .map((t: any) => t.plain_text)
+        .join('')
+      break
+    case 'image':
+      text = block.image.caption
+        ? block.image.caption.map((t: any) => t.plain_text).join('')
+        : ''
+      break
   }
+
   return text.trim()
 }
 
-function extractSectionFromContent(content: string, sectionName: string): string | undefined {
-  const regex = new RegExp(`${sectionName}:?\\s*([^\\n]*(?:\\n(?!\\n)[^\\n]*)*)`, 'im')
+function extractSectionFromContent(
+  content: string,
+  sectionName: string
+): string | undefined {
+  const regex = new RegExp(
+    `${sectionName}:?\\s*([^\\n]*(?:\\n(?!\\n)[^\\n]*)*)`,
+    'im'
+  )
   const match = content.match(regex)
   return match ? match[1].trim() : undefined
 }
@@ -279,12 +390,16 @@ function extractSectionFromContent(content: string, sectionName: string): string
 function extractAliasesFromContent(content: string): string[] {
   const aliasMatch = content.match(/aliases?:?\s*([^\n]+)/im)
   if (aliasMatch) {
-    return aliasMatch[1].split(/[,;]/).map((a) => a.trim()).filter(Boolean)
+    return aliasMatch[1]
+      .split(/[,;]/)
+      .map((a) => a.trim())
+      .filter(Boolean)
   }
   return []
 }
 
 function extractImagesFromContent(content: string): string[] {
+  // Extract image URLs or descriptions from content
   const imageMatches = content.match(/!\[.*?\]\((.*?)\)/g) || []
   return imageMatches.map((m) => m.replace(/!\[.*?\]\((.*?)\)/, '$1'))
 }
@@ -292,8 +407,11 @@ function extractImagesFromContent(content: string): string[] {
 function parseEplScores(scores: string[]): Record<string, number> {
   const result: Record<string, number> = {}
   scores.forEach((score) => {
+    // Format: "Season 1: 91"
     const match = score.match(/^(.+?):\s*(\d+)$/)
-    if (match) { result[match[1].trim()] = parseInt(match[2], 10) }
+    if (match) {
+      result[match[1].trim()] = parseInt(match[2], 10)
+    }
   })
   return result
 }
