@@ -1,15 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getChapters } from '@/lib/notion';
-import { Chapter } from 'A/lib/types';
+import { NextRequest, NextResponse } from 'next/server'
+import { fetchChapters } from '@/lib/notion'
 
-export async function GET(req: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const chapters = await getChapters();
-    return NextResponse.json(chapters);
+    const chapters = await fetchChapters()
+    return NextResponse.json(chapters)
   } catch (error) {
+    console.error('API error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to fetch chapters' },
       { status: 500 }
-    );
+    )
   }
 }
