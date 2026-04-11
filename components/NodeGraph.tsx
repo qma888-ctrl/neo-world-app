@@ -227,7 +227,22 @@ export function NodeGraph() {
     })
     svg.call(zoom)
 
-    // Auto-fit graph into view once simulation settles
+    // Function to push d3 positions onto SVG attributes
+    const updatePositions = () => {
+      link
+        .attr('x1', (d: any) => (d.source as any).x || 0)
+        .attr('y1', (d: any) => (d.source as any).y || 0)
+        .attr('x2', (d: any) => (d.target as any).x || 0)
+        .attr('y2', (d: any) => (d.target as any).y || 0)
+      node
+        .attr('cx', (d: any) => d.x || 0)
+        .attr('cy', (d: any) => d.y || 0)
+      labels
+        .attr('x', (d: any) => d.x || 0)
+        .attr('y', (d: any) => d.y || 0)
+    }
+
+    // Auto-fit graph into view based on current positions
     const fitToView = () => {
       const padding = 40
       const xs = nodes.map((n: any) => n.x).filter((v) => typeof v === 'number')
@@ -251,25 +266,17 @@ export function NodeGraph() {
         .duration(600)
         .call(zoom.transform as any, d3.zoomIdentity.translate(tx, ty).scale(scale))
     }
-    simulation.on('end', fitToView)
-    setTimeout(fitToView, 1200)
 
-    // Update positions
-    simulation.on('tick', () => {
-      link
-        .attr('x1', (d) => (d.source as any).x)
-        .attr('y1', (d) => (d.source as any).y)
-        .attr('x2', (d) => (d.target as any).x)
-        .attr('y2', (d) => (d.target as any).y)
+    // Live tick handler for drag interactions
+    simulation.on('tick', updatePositions)
 
-      node
-        .attr('cx', (d) => d.x || 0)
-        .attr('cy', (d) => d.y || 0)
-
-      labels
-        .attr('x', (d) => d.x || 0)
-        .attr('y', (d) => d.y || 0)
-    })
+    // Run simulation synchronously to settle layout immediately
+    simulation.stop()
+    for (let i = 0; i < 320; i++) simulation.tick()
+    updatePositions()
+    fitToView()
+    // Restart with low alpha so dragging still works
+    simulation.alpha(0).restart()
 
     return () => {
       simulation.stop()
