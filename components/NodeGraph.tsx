@@ -112,30 +112,33 @@ export function NodeGraph() {
       .attr('width', width)
       .attr('height', height)
 
-    // Add background
+    // Transparent background — let brain aesthetic show through
     svg
       .append('rect')
       .attr('width', width)
       .attr('height', height)
-      .attr('fill', '#0a0e27')
+      .attr('fill', 'transparent')
       .on('click', () => {
         selectCharacter(null)
         selectWorldRule(null)
         selectChapter(null)
       })
 
-    // Create simulation
+    // Create simulation — tightened so everything fits in view
     const simulation = d3
       .forceSimulation(nodes as any)
       .force(
         'link',
         d3.forceLink(links as any)
           .id((d: any) => d.id)
-          .distance(100)
+          .distance(28)
+          .strength(0.9)
       )
-      .force('charge', d3.forceManyBody().strength(-300))
+      .force('charge', d3.forceManyBody().strength(-45))
       .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide().radius(20))
+      .force('x', d3.forceX(width / 2).strength(0.12))
+      .force('y', d3.forceY(height / 2).strength(0.12))
+      .force('collision', d3.forceCollide().radius(13))
 
     const g = svg.append('g')
 
@@ -223,6 +226,33 @@ export function NodeGraph() {
       g.attr('transform', e.transform)
     })
     svg.call(zoom)
+
+    // Auto-fit graph into view once simulation settles
+    const fitToView = () => {
+      const padding = 40
+      const xs = nodes.map((n: any) => n.x).filter((v) => typeof v === 'number')
+      const ys = nodes.map((n: any) => n.y).filter((v) => typeof v === 'number')
+      if (xs.length === 0) return
+      const minX = Math.min(...xs)
+      const maxX = Math.max(...xs)
+      const minY = Math.min(...ys)
+      const maxY = Math.max(...ys)
+      const w = Math.max(maxX - minX, 1)
+      const h = Math.max(maxY - minY, 1)
+      const scale = Math.min(
+        (width - padding * 2) / w,
+        (height - padding * 2) / h,
+        1.4
+      )
+      const tx = width / 2 - ((minX + maxX) / 2) * scale
+      const ty = height / 2 - ((minY + maxY) / 2) * scale
+      svg
+        .transition()
+        .duration(600)
+        .call(zoom.transform as any, d3.zoomIdentity.translate(tx, ty).scale(scale))
+    }
+    simulation.on('end', fitToView)
+    setTimeout(fitToView, 1200)
 
     // Update positions
     simulation.on('tick', () => {
